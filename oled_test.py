@@ -1,28 +1,23 @@
-import board
-import busio
+from luma.core.interface.serial import i2c
+from luma.oled.device import ssd1306  # We'll use ssd1306 class but it works with many 1106 modules
 from PIL import Image, ImageDraw, ImageFont
-import adafruit_ssd1306
 
-# Initialize I2C
-i2c = busio.I2C(board.SCL, board.SDA)
+# Initialize I2C (SDA=GPIO2, SCL=GPIO3)
+serial = i2c(port=1, address=0x3C)
 
-# Initialize display (most 1.3" OLEDs are 128x64)
-disp = adafruit_ssd1306.SSD1306_I2C(128, 64, i2c)
+# Create device — ssd1306 class sometimes works for SSD1106
+device = ssd1306(serial, rotate=0)  # rotate may be needed depending on your screen
 
 # Clear display
-disp.fill(0)
-disp.show()
+device.clear()
 
-# Create a blank image for drawing
-image = Image.new("1", (disp.width, disp.height))
+# Create an image for drawing
+image = Image.new("1", (device.width, device.height))
 draw = ImageDraw.Draw(image)
 
-# Draw a white rectangle and some text
-draw.rectangle((0, 0, disp.width, disp.height), outline=255, fill=0)
-draw.text((10, 25), "Hello OLED!", fill=255)
+# Draw some text
+font = ImageFont.load_default()
+draw.text((0, 10), "Hello SSD1106!", font=font, fill=255)
 
-# Display image
-disp.image(image)
-disp.show()
-
-print("✅ OLED test complete!")
+# Display the image
+device.display(image)
