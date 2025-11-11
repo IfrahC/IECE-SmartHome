@@ -1,26 +1,28 @@
 import board
-import digitalio
+import busio
 from PIL import Image, ImageDraw, ImageFont
 import adafruit_ssd1306
 
-# Create the I2C interface
-i2c = board.I2C()
+# Initialize I2C
+i2c = busio.I2C(board.SCL, board.SDA)
 
-# Create the display object
-display = adafruit_ssd1306.SSD1306_I2C(128, 64, i2c)
+# Initialize display (most 1.3" OLEDs are 128x64)
+disp = adafruit_ssd1306.SSD1306_I2C(128, 64, i2c)
 
 # Clear display
-display.fill(0)
-display.show()
+disp.fill(0)
+disp.show()
 
-# Create an image to draw on
-image = Image.new("1", (display.width, display.height))
+# Create a blank image for drawing
+image = Image.new("1", (disp.width, disp.height))
 draw = ImageDraw.Draw(image)
 
-# Draw text
-font = ImageFont.load_default()
-draw.text((10, 30), "Hello Pi!", font=font, fill=255)
+# Draw a white rectangle and some text
+draw.rectangle((0, 0, disp.width, disp.height), outline=255, fill=0)
+draw.text((10, 25), "Hello OLED!", fill=255)
 
 # Display image
-display.image(image)
-display.show()
+disp.image(image)
+disp.show()
+
+print("✅ OLED test complete!")
