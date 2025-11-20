@@ -19,12 +19,11 @@ factory = PiGPIOFactory()
 sensor = DistanceSensor(echo=27, trigger=17, max_distance=1.5, pin_factory=factory)
 
 # --- DHT22 Sensor ---
-dht_device = adafruit_dht.DHT22(board.D4)
+dht_device = adafruit_dht.DHT11(board.D22)
 
 # --- OLED SH1106 ---
 serial = i2c(port=1, address=0x3C)
 device = sh1106(serial)
-
 font = ImageFont.load_default()
 
 
@@ -71,6 +70,10 @@ while True:
 
     except Exception as e:
         print("OLED Error:", e)
+        
+    except KeyboardInterrupt:
+        print("Interrupted")
+        dht_device.close()
 
     # ----- Print to terminal -----
     print(f"Gate: {gate_status} | Distance: {distance_cm:.1f} cm")
@@ -79,5 +82,6 @@ while True:
         print(f"Temp: {temp_c:.1f}°C  Humidity: {hum:.1f}%")
 
     print("-" * 40)
-
+    
     sleep(1)
+
