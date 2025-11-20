@@ -101,14 +101,15 @@ def not_detected():
 
 def check_distance():
     distance = (sensor.distance) * 100
-    distanceDisplay.value = f"{distance:.2f} cm"
+    global distanceDisplay
+    distanceDisplay = f"{distance:.2f} cm"
     print(f"{distance:.2f} cm")
 
     if distance > 40:
         not_detected()
     else:
         detected()
-    oled_ultrasonic()
+    oled_ultrasonic(distance)
 
 
 # def read_dht():
@@ -141,7 +142,7 @@ def check_distance():
 #     except Exception as e:
 #         print("OLED error:", e)
 
-def oled_ultrasonic():
+def oled_ultrasonic(distance):
 #     device.clear()
     try:
         image = Image.new("1", (device.width, device.height))
