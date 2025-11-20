@@ -32,28 +32,33 @@ distanceDisplay = -1
 # FUNCTIONS
 # -------------------------------------------------
 
-def move_servo(angle):
-    """Move servo to a specific angle in degrees (0 to 180)."""
-    # Convert 0-180° to -1 to 1 for gpiozero Servo
-    value = (angle / 90.0) - 1
-    value = max(-1, min(1, value))  # clamp to valid range
-    servo.value = value
-    sleep(0.5)
+# def move_servo(angle):
+#     """Move servo to a specific angle in degrees (0 to 180)."""
+#     # Convert 0-180° to -1 to 1 for gpiozero Servo
+#     value = (angle / 90.0) - 1
+#     value = max(-1, min(1, value))  # clamp to valid range
+#     servo.value = value
+#     sleep(0.5)
 
 def detected():
-    global gateStat
-    gateStat = "Detected"
-    print(gateStat)
-    move_servo(90)  # move servo to 90° when something is detected
-    sleep(2)
-    move_servo(0)
-    sleep(1)
+    global gateStat, gateOpen
+    if not gateOpen:
+        gateStat = "Gate OPEN"
+        gateOpen = True
+        servo.max()
+        print("Detected")
+#         move_servo(90)  # move servo to 90° when something is detected
+#         sleep(2)
+#         move_servo(0)
+#         sleep(1)
 
 def not_detected():
-    global gateStat
-    gateStat = "Not Detected"
-    print(gateStat)
-    move_servo(0)   # move servo back to 0° when nothing detected
+    global gateStat, gateOpen
+    if gateOpen:
+        gateStat = "Gate CLOSED"
+        gateOpen = False
+        servo.min()
+        print("Not Detected")
 
 def check_distance():
     distance = sensor.distance * 100
