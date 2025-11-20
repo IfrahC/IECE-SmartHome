@@ -13,7 +13,7 @@ from PIL import Image, ImageDraw, ImageFont
 factory = PiGPIOFactory()
 
 # --- Servo ---
-servo = Servo(18, pin_factory=factory)
+servo = Servo(13, pin_factory=factory)
 
 # --- Ultrasonic Sensor ---
 sensor = DistanceSensor(echo=27, trigger=17, max_distance=1.5, pin_factory=factory)
@@ -25,6 +25,7 @@ font = ImageFont.load_default()
 
 # --- Global variables ---
 gateStat = "Unknown"
+gateOpen = False
 distanceDisplay = -1
 
 # -------------------------------------------------
@@ -44,6 +45,9 @@ def detected():
     gateStat = "Detected"
     print(gateStat)
     move_servo(90)  # move servo to 90° when something is detected
+    sleep(2)
+    move_servo(0)
+    sleep(1)
 
 def not_detected():
     global gateStat
@@ -87,3 +91,4 @@ except KeyboardInterrupt:
     print("Exiting...")
     servo.detach()       # safely release servo
     sensor.close()
+
