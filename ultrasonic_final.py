@@ -14,9 +14,9 @@ from signal import pause
 # import board
 
 # --- OLED ---
-# from luma.core.interface.serial import i2c
-# from luma.oled.device import sh1106
-# from PIL import Image, ImageDraw, ImageFont
+from luma.core.interface.serial import i2c
+from luma.oled.device import sh1106
+from PIL import Image, ImageDraw, ImageFont
 
 # -----------------------------------------
 # INITIAL SETUP
@@ -51,6 +51,7 @@ sensor = DistanceSensor(echo=echo, trigger=trig, max_distance=1.5, pin_factory=f
 # container = Box(app, layout="grid")
 
 gateStat = "Unknown"
+distanceDisplay = -1
 
 # Text(container, text="Gate Status", grid=[0,2], align="left", size=16)
 # gateStatus = Text(container, text=gateStat, grid=[1,2], align="right", size=16)
@@ -100,14 +101,15 @@ def not_detected():
 
 def check_distance():
     distance = (sensor.distance) * 100
-#     distanceDisplay.value = f"{distance:.2f} cm"
+    distanceDisplay.value = f"{distance:.2f} cm"
     print(f"{distance:.2f} cm")
 
     if distance > 40:
         not_detected()
     else:
         detected()
-#         update_oled()
+    oled_ultrasonic()
+
 
 
 # def read_dht():
@@ -140,6 +142,17 @@ def check_distance():
 #     except Exception as e:
 #         print("OLED error:", e)
 
+def oled_ultrasonic():
+#     device.clear()
+    try:
+        image = Image.new("1", (device.width, device.height))
+        draw = ImageDraw.Draw(image)
+
+        draw.text((5,5), gateStat, font=font, fill = 255)
+        draw.text((5, 20), f"{distance:.2f} cm", font=font, fill=255)
+        device.display(image)
+    except Exception as e:
+        print("OLED error:", e)  
 
 # -----------------------------------------
 # PIR CALLBACKS (your original logic)
