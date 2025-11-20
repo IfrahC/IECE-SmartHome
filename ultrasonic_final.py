@@ -41,9 +41,9 @@ sensor = DistanceSensor(echo=echo, trigger=trig, max_distance=1.5, pin_factory=f
 # dht_device = adafruit_dht.DHT22(board.D3)
 
 # OLED
-# serial = i2c(port=1, address=0x3C)
-# device = sh1106(serial)
-# font = ImageFont.load_default()
+serial = i2c(port=1, address=0x3C)
+device = sh1106(serial)
+font = ImageFont.load_default()
 
 # GUI
 # app = App(title="Project", width=400, height=220)
@@ -111,7 +111,6 @@ def check_distance():
     oled_ultrasonic()
 
 
-
 # def read_dht():
 #     try:
 #         temperature_c = dht_device.temperature
@@ -152,7 +151,8 @@ def oled_ultrasonic():
         draw.text((5, 20), f"{distance:.2f} cm", font=font, fill=255)
         device.display(image)
     except Exception as e:
-        print("OLED error:", e)  
+        print("OLED error:", e)                      
+                      
 
 # -----------------------------------------
 # PIR CALLBACKS (your original logic)
