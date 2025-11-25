@@ -1,0 +1,41 @@
+× pigpiod.service - Daemon required to control GPIO pins via pigpio
+     Loaded: loaded (/lib/systemd/system/pigpiod.service; enabled; preset: enabled)
+     Active: failed (Result: signal) since Tue 2025-11-25 12:26:27 GMT; 5min ago
+   Duration: 2h 15min 25.128s
+    Process: 485 ExecStart=/usr/bin/pigpiod -l (code=exited, status=0/SUCCESS)
+    Process: 4086 ExecStop=/bin/systemctl kill pigpiod (code=killed, signal=TERM)
+   Main PID: 509 (code=exited, status=0/SUCCESS)
+        CPU: 11min 14.293s
+
+Nov 25 10:11:01 raspberrypi systemd[1]: Starting pigpiod.service - Daemon required to control GPIO pins via pigpio...
+Nov 25 10:11:02 raspberrypi systemd[1]: Started pigpiod.service - Daemon required to control GPIO pins via pigpio.
+Nov 25 12:26:27 raspberrypi systemd[1]: Stopping pigpiod.service - Daemon required to control GPIO pins via pigpio...
+Nov 25 12:26:27 raspberrypi systemd[1]: pigpiod.service: Sent signal SIGTERM to control process 4086 (systemctl) on client request.
+Nov 25 12:26:27 raspberrypi systemd[1]: pigpiod.service: Sent signal SIGTERM to main process 509 (pigpiod) on client request.
+Nov 25 12:26:27 raspberrypi systemd[1]: pigpiod.service: Control process exited, code=killed, status=15/TERM
+Nov 25 12:26:27 raspberrypi systemd[1]: pigpiod.service: Failed with result 'signal'.
+Nov 25 12:26:27 raspberrypi systemd[1]: Stopped pigpiod.service - Daemon required to control GPIO pins via pigpio.
+Nov 25 12:26:27 raspberrypi systemd[1]: pigpiod.service: Consumed 11min 14.293s CPU time.
+~
+~
+~
+~
+~
+~
+~
+maleeha@raspberrypi:~ $ ps aux | grep python
+maleeha     4091  8.9  7.3 606888 67824 ?        Sl   12:27   0:32 /usr/bin/python3 /usr/bin/thonny
+maleeha     4162  1.4  0.0   9180   632 ?        Sl   12:30   0:02 /home/maleeha/.local/lib/python3.11/site-packages/adafruit_blinka/microcontroller/bcm283x/pulseio/libgpiod_pulsein64 --pulses 81 --queue 23438 -i gpiochip0 22
+maleeha     4171  0.7  2.7  35292 25280 ?        S    12:30   0:01 /usr/bin/python3 -u -B /usr/lib/python3/dist-packages/thonny/plugins/cpython_backend/cp_launcher.py /home/maleeha {'run.warn_module_shadowing': True}
+maleeha     4180  0.0  0.2   6092  1960 pts/0    S+   12:33   0:00 grep --color=auto python
+maleeha@raspberrypi:~ $ gpioinfo | grep 22
+	line  22:     "GPIO22" "libgpiod_pulsein" input active-high [used]
+	line  22:     "GPIO22" "libgpiod_pulsein" input active-high [used]
+maleeha@raspberrypi:~ $ sudo lsof /dev/gpiochip0
+lsof: WARNING: can't stat() fuse.gvfsd-fuse file system /run/user/1000/gvfs
+      Output information may be incomplete.
+lsof: WARNING: can't stat() fuse.portal file system /run/user/1000/doc
+      Output information may be incomplete.
+COMMAND    PID    USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+libgpiod_ 4162 maleeha    3u   CHR  254,0      0t0   86 /dev/gpiochip0
+maleeha@raspberrypi:~ $ 
