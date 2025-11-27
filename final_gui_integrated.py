@@ -116,12 +116,14 @@ def create_card(parent, title_text, fg_color, width=140, height=110, radius=12):
     divider_id = canvas.create_rectangle(8, height//2-18, width-8, height//2-16, fill="#173248", outline="")
     value_id = canvas.create_text(width//2, height//2+6, text="--", font=VALUE_FONT, fill=fg_color)
 
+    # Hover effect
     def on_enter(event):
         for i in bg_ids: canvas.itemconfig(i, fill=CARD_HOVER)
     def on_leave(event):
         for i in bg_ids: canvas.itemconfig(i, fill=CARD_BG)
     canvas.bind("<Enter>", on_enter)
     canvas.bind("<Leave>", on_leave)
+
     return canvas, value_id
 
 # ------------------------- CREATE WINDOW ------------------------- #
@@ -156,13 +158,16 @@ def update_gui():
     read_DHT()
     check_motion()
 
-    # Update GUI using canvas.itemconfig instead of .config
+    # Update GUI using canvas.itemconfig
     temp_card_canvas.itemconfig(temp_val, text=f"{temp_c} °C")
     humidity_card_canvas.itemconfig(humidity_val, text=f"{humidity} %")
     distance_card_canvas.itemconfig(distance_val, text=f"{distanceDisplay} cm")
     motion_color = ACCENTS["motion"] if motion_status == "Detected" else "#98ff98"
     motion_card_canvas.itemconfig(motion_val, text=motion_status, fill=motion_color)
 
+    # Repeat every 500 ms
     window.after(500, update_gui)
 
+# Start GUI loop
+update_gui()
 window.mainloop()
