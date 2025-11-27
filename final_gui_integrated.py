@@ -156,7 +156,7 @@ def update_gui():
     read_DHT()
     check_motion()
 
-    # Update GUI
+    # Update GUI using canvas.itemconfig instead of .config
     temp_card_canvas.itemconfig(temp_val, text=f"{temp_c} °C")
     humidity_card_canvas.itemconfig(humidity_val, text=f"{humidity} %")
     distance_card_canvas.itemconfig(distance_val, text=f"{distanceDisplay} cm")
@@ -165,5 +165,4 @@ def update_gui():
 
     window.after(500, update_gui)
 
-update_gui()
 window.mainloop()
