@@ -12,11 +12,16 @@ from time import sleep
 factory = PiGPIOFactory()
 
 # LEDs + Relay
+active_high=False
 led1 = LED(9)
 led2 = LED(3)
-relay = LED(19)
+relay = LED(20,active_high=False,initial_value=False)
+relay.off()
 led1.on()
 led2.off()
+
+# PIR Motion Sensor
+pir = MotionSensor(6, pin_factory=factory)
 
 # Servo
 servo = Servo(13, pin_factory=factory, min_pulse_width=0.001, max_pulse_width=0.002)
@@ -25,11 +30,8 @@ servo.min()
 # Ultrasonic Sensor
 sensor = DistanceSensor(echo=27, trigger=17, max_distance=1.5, pin_factory=factory)
 
-# PIR Motion Sensor
-pir = MotionSensor(6, pin_factory=factory)
-
 # DHT11
-dht_device = adafruit_dht.DHT11(board.D22)
+dht_device = adafruit_dht.DHT11(board.D4)
 
 # ------------------------- GLOBAL VARIABLES ------------------------- #
 gateOpen = False
@@ -44,7 +46,7 @@ def detected():
     if not gateOpen:
         gateOpen = True
         servo.max()
-        relay.on()
+        #relay.on()
         led1.on()
         led2.off()
         sleep(1)
@@ -54,22 +56,10 @@ def not_detected():
     if gateOpen:
         gateOpen = False
         servo.min()
-        relay.off()
+        #relay.off()
         led1.off()
         led2.on()
         sleep(1)
-
-def motion_detected_callback():
-    global motion_status
-    motion_status = "Detected"
-    
-def motion_ended_callback():
-    global motion_status
-    motion_status = "None"
-
-# Set up PIR callbacks
-pir.when_motion = motion_detected_callback
-pir.when_no_motion = motion_ended_callback
 
 # ------------------------- GUI SETUP ------------------------- #
 WINDOW_BG = "#0f1724"
@@ -140,80 +130,47 @@ motion_card_canvas.grid(row=0, column=3, padx=10)
 
 # ------------------------- SENSOR THREAD ------------------------- #
 def sensor_loop():
-    global temp_c, humidity, distanceDisplay
-    dht_retry_count = 0
-    
-    print("Sensor thread started")
-    
+    global temp_c, humidity, distanceDisplay, motion_status
     while True:
+        # Distance / Servo
+        dist = sensor.distance * 100
+        distanceDisplay = f"{dist:.1f}"
+        if dist > 40:
+            not_detected()
+        else:
+            detected()
+
+        # DHT11
         try:
-            # Distance / Servo control
-            try:
-                dist = sensor.distance * 100
-                distanceDisplay = f"{dist:.1f}"
-                
-                if dist > 40:
-                    not_detected()
-                else:
-                    detected()
-            except Exception as e:
-                print(f"Distance sensor error: {e}")
-                distanceDisplay = "Error"
+            temp_c = dht_device.temperature
+            humidity = dht_device.humidity
+        except RuntimeError:
+            print("Buffering")
+#             temp_c = "--"
+#             humidity = "--"
 
-            # DHT11 Temperature & Humidity
-            try:
-                temp_reading = dht_device.temperature
-                humidity_reading = dht_device.humidity
-                
-                if temp_reading is not None and humidity_reading is not None:
-                    temp_c = temp_reading
-                    humidity = humidity_reading
-                    dht_retry_count = 0
-                else:
-                    dht_retry_count += 1
-                    if dht_retry_count > 3:
-                        temp_c = "--"
-                        humidity = "--"
-                        
-            except RuntimeError as e:
-                # DHT11 throws RuntimeError frequently, this is normal
-                dht_retry_count += 1
-                if dht_retry_count > 5:
-                    temp_c = "--"
-                    humidity = "--"
-                print(f"DHT11 read attempt failed (normal): {e}")
-            except Exception as e:
-                print(f"DHT11 error: {e}")
-                temp_c = "--"
-                humidity = "--"
+        # PIR
+        #motion_status = "Detected" if pir.motion_detected else "None"
+        if pir.motion_detected:
+            motion_status = "Detected"
+            relay.off()
+        else:
+            motion_status = "None"
+            relay.on()
 
-            # Sleep between sensor reads
-            sleep(2)  # DHT11 needs at least 2 seconds between reads
-            
-        except Exception as e:
-            print(f"Sensor loop error: {e}")
-            sleep(2)
+        sleep(1)
 
-# Start sensor thread BEFORE mainloop
-sensor_thread = threading.Thread(target=sensor_loop, daemon=True)
-sensor_thread.start()
+threading.Thread(target=sensor_loop, daemon=True).start()
 
 # ------------------------- GUI UPDATE LOOP ------------------------- #
 def update_gui():
-    try:
-        temp_card_canvas.itemconfig(temp_val, text=f"{temp_c} °C")
-        humidity_card_canvas.itemconfig(humidity_val, text=f"{humidity} %")
-        distance_card_canvas.itemconfig(distance_val, text=f"{distanceDisplay} cm")
-        motion_color = ACCENTS["motion"] if motion_status == "Detected" else "#98ff98"
-        motion_card_canvas.itemconfig(motion_val, text=motion_status, fill=motion_color)
-    except Exception as e:
-        print(f"GUI update error: {e}")
-    
+    temp_card_canvas.itemconfig(temp_val, text=f"{temp_c} °C")
+    humidity_card_canvas.itemconfig(humidity_val, text=f"{humidity} %")
+    distance_card_canvas.itemconfig(distance_val, text=f"{distanceDisplay} cm")
+    motion_color = ACCENTS["motion"] if motion_status == "Detected" else "#98ff98"
+    motion_card_canvas.itemconfig(motion_val, text=motion_status, fill=motion_color)
+
     window.after(500, update_gui)
 
-# Start GUI updates
 update_gui()
-
-# Start the GUI main loop (this blocks)
-print("Starting GUI...")
 window.mainloop()
