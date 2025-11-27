@@ -67,9 +67,7 @@ def check_distance():
 
 def update_oled(distance):
     try:
-        while True:
-            device.text = f"{distance:.2f} cm"
-            sleep(0.5)
+        device.text = f"{gateStat}\n{distance:.2f} cm"
     except Exception as e:
         print("OLED error:", e)
 
