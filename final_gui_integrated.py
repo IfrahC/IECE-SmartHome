@@ -1,5 +1,6 @@
 # ------------------------- IMPORTS ------------------------- #
 import time
+import threading
 import board
 import adafruit_dht
 import tkinter as tk
@@ -58,30 +59,7 @@ def not_detected():
         led2.on()
         sleep(1)
 
-def check_distance():
-    global distanceDisplay
-    dist = sensor.distance * 100
-    distanceDisplay = f"{dist:.1f}"
-    if dist > 40:
-        not_detected()
-    else:
-        detected()
-
-def read_DHT():
-    global temp_c, humidity
-    try:
-        temp_c = dht_device.temperature
-        humidity = dht_device.humidity
-    except RuntimeError:
-        temp_c = "--"
-        humidity = "--"
-
-def check_motion():
-    global motion_status
-    motion_status = "Detected" if pir.motion_detected else "None"
-
 # ------------------------- GUI SETUP ------------------------- #
-# Colors & fonts
 WINDOW_BG = "#0f1724"
 CARD_BG = "#0b1b2b"
 CARD_HOVER = "#133041"
@@ -98,12 +76,11 @@ TITLE_FONT = ("Helvetica", 18, "bold")
 LABEL_FONT = ("Helvetica", 10)
 VALUE_FONT = ("Helvetica", 16, "bold")
 
-# ------------------------- CARD CREATOR ------------------------- #
 def create_card(parent, title_text, fg_color, width=140, height=110, radius=12):
     canvas = tk.Canvas(parent, width=width, height=height, highlightthickness=0, bg=WINDOW_BG)
     x1, y1, x2, y2 = 4, 4, width - 4, height - 4
     r = radius
-    # Draw background with rounded corners
+    # Draw rounded rectangle background
     bg_ids = [
         canvas.create_rectangle(x1+r, y1, x2-r, y2, fill=CARD_BG, outline=""),
         canvas.create_rectangle(x1, y1+r, x2, y2-r, fill=CARD_BG, outline=""),
@@ -116,14 +93,12 @@ def create_card(parent, title_text, fg_color, width=140, height=110, radius=12):
     divider_id = canvas.create_rectangle(8, height//2-18, width-8, height//2-16, fill="#173248", outline="")
     value_id = canvas.create_text(width//2, height//2+6, text="--", font=VALUE_FONT, fill=fg_color)
 
-    # Hover effect
     def on_enter(event):
         for i in bg_ids: canvas.itemconfig(i, fill=CARD_HOVER)
     def on_leave(event):
         for i in bg_ids: canvas.itemconfig(i, fill=CARD_BG)
     canvas.bind("<Enter>", on_enter)
     canvas.bind("<Leave>", on_leave)
-
     return canvas, value_id
 
 # ------------------------- CREATE WINDOW ------------------------- #
@@ -151,23 +126,42 @@ humidity_card_canvas.grid(row=0, column=1, padx=10)
 distance_card_canvas.grid(row=0, column=2, padx=10)
 motion_card_canvas.grid(row=0, column=3, padx=10)
 
+# ------------------------- SENSOR THREAD ------------------------- #
+def sensor_loop():
+    global temp_c, humidity, distanceDisplay, motion_status
+    while True:
+        # Distance / Servo
+        dist = sensor.distance * 100
+        distanceDisplay = f"{dist:.1f}"
+        if dist > 40:
+            not_detected()
+        else:
+            detected()
+
+        # DHT11
+        try:
+            temp_c = dht_device.temperature
+            humidity = dht_device.humidity
+        except RuntimeError:
+            temp_c = "--"
+            humidity = "--"
+
+        # PIR
+        motion_status = "Detected" if pir.motion_detected else "None"
+
+        sleep(1)
+
+threading.Thread(target=sensor_loop, daemon=True).start()
+
 # ------------------------- GUI UPDATE LOOP ------------------------- #
 def update_gui():
-    # Read sensor values
-    check_distance()
-    read_DHT()
-    check_motion()
-
-    # Update GUI using canvas.itemconfig
     temp_card_canvas.itemconfig(temp_val, text=f"{temp_c} °C")
     humidity_card_canvas.itemconfig(humidity_val, text=f"{humidity} %")
     distance_card_canvas.itemconfig(distance_val, text=f"{distanceDisplay} cm")
     motion_color = ACCENTS["motion"] if motion_status == "Detected" else "#98ff98"
     motion_card_canvas.itemconfig(motion_val, text=motion_status, fill=motion_color)
 
-    # Repeat every 500 ms
     window.after(500, update_gui)
 
-# Start GUI loop
 update_gui()
 window.mainloop()
