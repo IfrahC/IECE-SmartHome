@@ -1,8 +1,8 @@
 from gpiozero import Servo, DistanceSensor
 from gpiozero.pins.pigpio import PiGPIOFactory
 from time import sleep
-from luma.core.interface.serial import i2c
-from luma.oled.device import sh1106
+from luma.core.interface.serial import pcf8574
+from luma.oled.device import hd44780
 from PIL import Image, ImageDraw, ImageFont
 
 # -------------------------------------------------
@@ -19,26 +19,18 @@ servo = Servo(13, pin_factory=factory)
 sensor = DistanceSensor(echo=27, trigger=17, max_distance=1.5, pin_factory=factory)
 
 # --- OLED ---
-serial = i2c(port=1, address=0x3C)
-device = sh1106(serial)
-font = ImageFont.load_default()
+serial = pcf8574(port=1, address=0x27)
+device = hd44780(serial, width = 16, height = 2)
 
 # --- Global variables ---
 gateStat = "Unknown"
 gateOpen = False
 distanceDisplay = -1
+device.text = ""
 
 # -------------------------------------------------
 # FUNCTIONS
 # -------------------------------------------------
-
-# def move_servo(angle):
-#     """Move servo to a specific angle in degrees (0 to 180)."""
-#     # Convert 0-180° to -1 to 1 for gpiozero Servo
-#     value = (angle / 90.0) - 1
-#     value = max(-1, min(1, value))  # clamp to valid range
-#     servo.value = value
-#     sleep(0.5)
 
 def detected():
     global gateStat, gateOpen
@@ -75,11 +67,9 @@ def check_distance():
 
 def update_oled(distance):
     try:
-        image = Image.new("1", (device.width, device.height))
-        draw = ImageDraw.Draw(image)
-        draw.text((5, 5), gateStat, font=font, fill=255)
-        draw.text((5, 20), f"{distance:.2f} cm", font=font, fill=255)
-        device.display(image)
+        while True:
+            device.text = f"{distance:.2f} cm"
+            sleep(0.5)
     except Exception as e:
         print("OLED error:", e)
 
@@ -94,6 +84,4 @@ try:
 
 except KeyboardInterrupt:
     print("Exiting...")
-    servo.detach()       # safely release servo
-    sensor.close()
 
