@@ -1,6 +1,0 @@
-Traceback (most recent call last):
-  File "/home/maleeha/Downloads/final_gui_integrated.py", line 194, in <module>
-    update_gui()
-  File "/home/maleeha/Downloads/final_gui_integrated.py", line 185, in update_gui
-    temp_val.config(text=f"{tempDisplay} °C")
-AttributeError: 'int' object has no attribute 'config'
